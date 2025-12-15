@@ -1,0 +1,936 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Text generator - Harry Potter</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #3f476b 0%, #7b8dce 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #97aaff 0%, #5cbbff 100%);
+            color: white;
+            padding: 40px 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 40px;
+        }
+
+        .section {
+            margin-bottom: 30px;
+        }
+
+        .section h2 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        input[type="text"] {
+            flex: 1;
+            padding: 12px 15px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            font-size: 1em;
+            transition: border-color 0.3s;
+        }
+
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        button {
+            padding: 12px 30px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        button:hover {
+            background: #857cd6;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(71, 99, 225, 0.4);
+        }
+        button:active {
+            transform: sc(0.98);
+            box-shadow: none;
+        }
+
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .text-display {
+            background: #f8f9fa;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 20px;
+            min-height: 120px;
+            font-size: 1.1em;
+            line-height: 1.6;
+            font-family: 'Georgia', serif;
+            color: #333;
+            word-wrap: break-word;
+        }
+
+        .predictions {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .token-card {
+            background: #f0f3ff;
+            border: 2px solid #667eea;
+            border-radius: 8px;
+            padding: 15px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .token-card:hover {
+            background: #667eea;
+            color: white;
+            transform: translateY(-3px);
+        }
+
+        .token-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.2);
+            width: 0;
+            transition: width 0.3s;
+        }
+
+        .token-card:hover::before {
+            width: 100%;
+        }
+
+        .token-text {
+            font-weight: bold;
+            font-size: 1.1em;
+            margin-bottom: 5px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .token-prob {
+            font-size: 0.9em;
+            opacity: 0.7;
+            position: relative;
+            z-index: 1;
+        }
+
+        .token-card.selected {
+            background: #667eea;
+            color: white;
+            border-color: #764ba2;
+        }
+
+        .control-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .status {
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .status.show {
+            display: block;
+        }
+
+        .status.loading {
+            background: #e3f2fd;
+            color: #1976d2;
+            border-left: 4px solid #1976d2;
+        }
+
+        .status.error {
+            background: #ffebee;
+            color: #c62828;
+            border-left: 4px solid #c62828;
+        }
+
+        .status.success {
+            background: #e8f5e9;
+            color: #2e7d32;
+            border-left: 4px solid #2e7d32;
+        }
+
+        .loader {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(0, 0, 0, 0.1);
+            border-radius: 50%;
+            border-top-color: #667eea;
+            animation: spin 1s ease-in-out infinite;
+            margin-right: 10px;
+            vertical-align: middle;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .slider-group {
+            margin-bottom: 20px;
+        }
+
+        .slider-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 600;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            background: #ddd;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #667eea;
+            cursor: pointer;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+
+        input[type="range"]::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #667eea;
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+
+        .slider-value {
+            color: #667eea;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .stat-box {
+            background: #f0f3ff;
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            border-radius: 6px;
+        }
+
+        .stat-label {
+            color: #666;
+            font-size: 0.9em;
+            margin-bottom: 5px;
+        }
+
+        .stat-value {
+            color: #667eea;
+            font-size: 1.5em;
+            font-weight: bold;
+        }
+
+        .footer {
+            background: #f8f9fa;
+            padding: 20px;
+            text-align: center;
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 1.8em;
+            }
+
+            .content {
+                padding: 20px;
+            }
+
+            .input-group {
+                flex-direction: column;
+            }
+
+            .predictions {
+                grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1> Natural Language Processing </h1>
+            <p>Model trained on Harry Potter | Token-by-token generation</p>
+        </div>
+
+        <div class="content">
+            <!-- Status Messages -->
+            <div id="status" class="status"></div>
+
+            <!-- Input Section -->
+            <div class="section">
+                <h2>📝 Your Prompt</h2>
+                <div class="input-group">
+                    <input type="text" id="promptInput" placeholder="Ex: Harry Potter is a series of" value="Harry Potter is a series of">
+                    <button onclick="initializeGeneration()">Start generation</button>
+                </div>
+            </div>
+
+            <!-- Text Display -->
+            <div class="section">
+                <h2>Generated text</h2>
+                <div class="text-display" id="textDisplay">
+                    Enter a prompt and click "Start" to begin generation...
+                </div>
+            </div>
+
+            <!-- Settings -->
+            <div class="section">
+                <h2>Parameters</h2>
+                <div class="slider-group">
+                    <label>Top-K Sampling (diversity): <span class="slider-value" id="kValue">5</span></label>
+                    <input type="range" id="kSlider" min="1" max="20" value="5" oninput="document.getElementById('kValue').textContent = this.value">
+                </div>
+                <div class="slider-group">
+                    <label>Number of tokens to generate: <span class="slider-value" id="numTokensValue">10</span></label>
+                    <input type="range" id="numTokensSlider" min="1" max="50" value="10" oninput="document.getElementById('numTokensValue').textContent = this.value">
+                </div>
+            </div>
+
+            <!-- Predictions -->
+            <div class="section">
+                <h2>Top-10 predictions for the next token</h2>
+                <div class="predictions" id="predictions"></div>
+            </div>
+
+            <!-- Controls -->
+            <div class="section">
+                <div class="control-buttons">
+                    <button class="btn-secondary" onclick="generateAutomatic()">Generate Automatically</button>
+                    <button class="btn-secondary" onclick="resetGeneration()">Reset</button>
+                </div>
+            </div>
+
+            <!-- Statistics -->
+            <div class="section">
+                <h2>Statistics</h2>
+                <div class="stats">
+                    <div class="stat-box">
+                        <div class="stat-label">Generated Tokens</div>
+                        <div class="stat-value" id="tokenCount">0</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-label">Total Length</div>
+                        <div class="stat-value" id="textLength">0</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-label">Average Confidence</div>
+                        <div class="stat-value" id="avgConfidence">0%</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ============================================
+        // GLOBAL STATE
+        // ============================================
+        let model = null;
+        let currentTokens = [];
+        let confidences = [];
+        let isGenerating = false;
+        let weights = null;
+
+        // ============================================
+        // UTILITY FUNCTIONS
+        // ============================================
+        function showStatus(message, type = 'loading') {
+            console.log('Status:', message);
+            const status = document.getElementById('status');
+            status.textContent = type === 'loading' ? '⏳ ' + message : message;
+            status.className = 'status show ' + type;
+        }
+
+        function hideStatus() {
+            document.getElementById('status').className = 'status';
+        }
+
+        function updateDisplay() {
+            text = decodeBPE(currentTokens);
+            document.getElementById('textDisplay').textContent = text;
+            document.getElementById('tokenCount').textContent = currentTokens.length;
+            document.getElementById('textLength').textContent = text.length;
+            
+            if (confidences.length > 0) {
+                const avg = (confidences.reduce((a, b) => a + b, 0) / confidences.length * 100).toFixed(1);
+                document.getElementById('avgConfidence').textContent = avg + '%';
+            }
+        }
+
+        // ============================================
+        // MATRIX OPERATIONS (Simple implementations)
+        // ============================================
+        
+        function matmul(A, B) {
+            // A: m×n, B: n×p → Result: m×p
+            const m = A.length;
+            const n = A[0].length;
+            const p = B[0].length;
+            
+            const result = Array(m).fill(0).map(() => Array(p).fill(0));
+            
+            for (let i = 0; i < m; i++) {
+                for (let j = 0; j < p; j++) {
+                    for (let k = 0; k < n; k++) {
+                        result[i][j] += A[i][k] * B[k][j];
+                    }
+                }
+            }
+            return result;
+        }
+
+        function add(A, B) {
+            return A.map((row, i) => row.map((val, j) => val + B[i][j]));
+        }
+
+        function transpose(A) {
+            return A[0].map((_, j) => A.map((_, i) => A[i][j]));
+        }
+
+        function softmax(arr) {
+            const maxVal = Math.max(...arr);
+            const exp = arr.map(x => Math.exp(x - maxVal));
+            const sum = exp.reduce((a, b) => a + b, 0);
+            return exp.map(x => x / sum);
+        }
+
+        function relu(x) {
+            return Math.max(0, x);
+        }
+
+        function argmax(arr) {
+            return arr.reduce((max, val, i, a) => val > a[max] ? i : max, 0);
+        }
+
+        // ============================================
+        // ONE-HOT ENCODING
+        // ============================================
+        function oneHot(index, vocabSize) {
+            const vec = Array(vocabSize).fill(0);
+            vec[index-1] = 1;
+            return vec;
+        }
+
+        function matmulVector(v, M) {
+            if (!v || !M || M.length === 0) return [];
+            const rows = M.length;
+            const cols = M[0].length;
+
+            const result = new Array(cols).fill(0);
+            for (let j = 0; j < cols; j++) {
+                let sum = 0;
+                for (let i = 0; i < rows; i++) {
+                    sum += (v[i] || 0) * (M[i][j] || 0);
+                }
+                result[j] = sum;
+            }
+            return result;
+        }
+        function transpose(A) {
+            const rows = A.length;
+            const cols = A[0].length;
+            const result = Array(cols).fill(0).map(() => Array(rows).fill(0));
+            
+            for (let i = 0; i < rows; i++) {
+                for (let j = 0; j < cols; j++) {
+                    result[j][i] = A[i][j];
+                }
+            }
+            
+            return result;
+        }
+
+        // ============================================
+        // BPE ENCODING (Simplified)
+        // ============================================
+        function encodeBPE(token, merges) {
+            // Check if token is pure whitespace
+            if (/^\s+$/.test(token)) {
+                return [token];
+            }
+
+            // Transform word into array of characters
+            // Each character becomes a separate string
+            const chars = token.split('').map(c => c);
+            if (chars[chars.length - 1] !== ' ') {
+                chars.push(' '); // Add space if not present
+            }
+
+            // Apply merges sequentially
+            for (const [pair1, pair2] of merges) {
+                let i = 0;
+                while (i < chars.length - 1) {
+                    if (chars[i] === pair1 && chars[i + 1] === pair2) {
+                        // Merge the two tokens
+                        chars[i] = pair1 + pair2;
+                        chars.splice(i + 1, 1); // Remove next element
+                        // Don't increment i to check if this new token can merge again
+                    } else {
+                        i++;
+                    }
+                }
+            }
+
+            return chars;
+        }
+
+        /**
+        * Decode BPE tokens back to text
+        * @param {Array<string>} tokens - Array of BPE tokens
+        * @returns {string} - Decoded text
+        */
+        function decodeBPE(tokens) {
+            let text = '';
+
+            for (const tok of tokens) {
+                if (/^\s+$/.test(tok)) {
+                    // Pure whitespace - keep as is
+                    text += tok;
+                } else {
+                    // Remove </w> marker at end of words
+                    const cleaned = tok.replace(/<\/w>$/, '');
+                    text += cleaned;
+                }
+            }
+
+            return text;
+        }
+        function reshape(flatArray, rows, cols=1) {
+            const matrix = [];
+            let idx = 0;
+            
+            for (let i = 0; i < rows; i++) {
+                const row = [];
+                for (let j = 0; j < cols; j++) {
+                    row.push(flatArray[idx++]);
+                }
+                matrix.push(row);
+            }
+            
+            return matrix;
+        }
+        
+        // ============================================
+        // POSITIONAL ENCODING
+        // ============================================
+        function positionalEncoding(seqLen, embeddingDim) {
+            const PE = Array(seqLen).fill(0).map(() => Array(embeddingDim).fill(0));
+            
+            for (let pos = 0; pos < seqLen; pos++) {
+                for (let i = 0; i < embeddingDim; i += 2) {
+                    const angleRates = 1 / Math.pow(10000, i / embeddingDim);
+                    PE[pos][i] = Math.sin((pos+1) * angleRates);
+                    if (i + 1 < embeddingDim) {
+                        PE[pos][i + 1] = Math.cos((pos+1) * angleRates);
+                    }
+                }
+            }
+            
+            return PE;
+        }
+
+        // ============================================
+        // TRANSFORMER FORWARD PASS
+        //// ============================================
+        function miniTransformer(seq, weights) {
+            console.log('MiniTransformer - séquence d\'entrée:', seq);
+            
+            const seqLen = seq.length;
+            const vocabSize = 1063;
+            const params = weights['params'];
+            
+            // ===== Extraction des poids =====
+            //const W_embed = reshape(params['W_embed'], vocabSize, 64);
+            const W_embed = params['W_embed'];
+            const W_Q = params['W_Q'];
+            const W_K = params['W_K'];
+            const W_V = params['W_V'];
+            const W_O = params['W_O'];
+            const W_ff1 = params['W_ff1'];
+            const b_ff1 = params['b_ff1'];
+            const W_ff2 = params['W_ff2'];
+            const b_ff2 = params['b_ff2'];
+            const W_out = params['W_out'];
+            const b_out = params['b_out'];
+            
+            const embeddingDim = 64;
+            
+            // ===== One-hot encoding (seq_len × vocab_size) =====
+            const oneHotSeq = Array(seqLen).fill(0).map((_, i) => {
+                return oneHot(seq[i], vocabSize);
+            });
+            
+            // ===== Embedding (seq_len × 64) =====
+            //let X_emb = oneHotSeq * W_embed
+            let X_emb = matmul(oneHotSeq, W_embed);        
+            // ===== Positional encoding (seq_len × 64) =====
+            const PE = positionalEncoding(seqLen, embeddingDim);
+            let X = add(X_emb, PE);
+    
+            
+            
+            // ===== Self-Attention =====
+            // Q = X * W_Q  (seq_len × 64)
+            const Q = matmul(X, W_Q);
+            const K = matmul(X, W_K);
+            const V = matmul(X, W_V);
+            
+            // Attention scores: Q * K^T / sqrt(d_k)
+            const K_T = transpose(K); // (64 × seq_len)
+            let attnScores = matmul(Q, K_T); // (seq_len × seq_len)
+            const dk = K[0].length; // 64
+            const scale = Math.sqrt(dk);
+            
+            // Normaliser et appliquer le masque causal
+            for (let i = 0; i < seqLen; i++) {
+                for (let j = 0; j < seqLen; j++) {
+                    attnScores[i][j] /= scale;
+                    if (j > i) attnScores[i][j] = -Infinity; // Causal mask
+                }
+            }
+            
+            // Softmax par ligne
+            const attnWeights = attnScores.map(row => softmax(row));
+            // Attention output: attnWeights * V  (seq_len × 64)
+            const attnOut = matmul(attnWeights, V);
+            
+            // ===== Projection + Residual Connection =====
+            // out1 = attnOut * W_O + X
+            let out1 = matmul(attnOut, W_O);
+            out1 = add(out1, X);
+            
+            
+            // ===== Feed-Forward Layer =====
+            // ff1 = relu(out1 * W_ff1 + b_ff1)
+            let ff1_pre = matmul(out1, W_ff1);
+            let ff1 = ff1_pre.map((row, i) =>
+                row.map((val, j) => relu(val + b_ff1[j]))
+            );
+            
+            // ff2 = ff1 * W_ff2 + b_ff2  (seq_len × 64)
+            let ff2_pre = matmul(ff1, W_ff2);
+            let ff2 = ff2_pre.map((row, i) =>
+                row.map((val, j) => val + b_ff2[j])
+            );
+            
+            // ===== Residual Connection =====
+            // out2 = ff2 + out1
+            let out2 = add(ff2, out1);
+            
+            // ===== Output Layer =====
+            // Prendre la dernière ligne (prédiction du prochain token)
+            //const lastOut = out2[seqLen - 1]; // Vecteur de (64)
+            const logits_pre = matmul(out2, W_out)[seqLen - 1]; // (vocab_size)
+            const logits = logits_pre.map((val, i) => val + b_out[i]);
+            return softmax(logits);
+        }
+        function topKIndices(probs, k = 10) {
+            // Crée la liste des indices [0, 1, 2, ..., N-1]
+            const indices = probs.map((_, i) => i);
+
+            // Trie les indices par probabilité décroissante
+            indices.sort((a, b) => probs[b] - probs[a]);
+
+            // Retourne les k meilleurs
+            return indices.slice(0, k);
+        }
+        function sampleTopKIndex(probs, k = 5) {
+            const indexed = probs.map((p, i) => [i, p]);
+
+            // on trie par proba décroissante
+            indexed.sort((a, b) => b[1] - a[1]);
+
+            // on garde les k meilleurs
+            const topk = indexed.slice(0, k);
+            const topk_probs = topk.map(([_, p]) => p);
+
+            // normalisation pour que la somme = 1
+            const sum = topk_probs.reduce((a, b) => a + b, 0);
+            const norm = topk_probs.map(p => p / sum);
+
+            // échantillonnage catégoriel via somme cumulée
+            const r = Math.random();
+            let cum = 0;
+            for (let i = 0; i < norm.length; i++) {
+                cum += norm[i];
+                if (r <= cum) {
+                    return topk[i][0]; // retourne l'index global du token
+                }
+            }
+            return topk[topk.length - 1][0]; // fallback
+        }
+
+        // ============================================
+        // LOAD WEIGHTS
+        // ============================================
+        async function loadWeights() {
+            try {
+                showStatus('Loading of the model...');
+                const response = await fetch('weights.json');
+                if (!response.ok) {
+                    throw new Error('Failed to load model weights');
+                }
+                const weights = await response.json();
+                params = weights['params'];
+                stoi = weights['stoi'];
+                itos = weights['itos'];
+                console.log('Model weights loaded successfully');
+                
+                
+                hideStatus();
+                showStatus('✓ Model loaded successfully!', 'success');
+                setTimeout(hideStatus, 30000);
+                
+                return weights;
+            } catch (error) {
+                showStatus('Error during loading: ' + error.message, 'error');
+                console.error(error);
+                return null;
+            }
+        }
+
+        // ============================================
+        // INITIALIZATION
+        // ============================================
+        async function initializeGeneration() {
+            let prompt = document.getElementById('promptInput').value;
+            
+            
+            if (!prompt.trim()) {
+                showStatus('Please enter a prompt', 'error');
+                return;
+            }
+
+            if (!weights) {
+                weights = await loadWeights();
+                if (!weights) return;
+            }
+
+            currentTokens = encodeBPE(prompt, weights['merges']);
+            probs = Array(1063).fill(1/1063); // distribution uniforme initiale
+            confidences = [];
+            updateDisplay();
+            
+            await generateNextToken();
+        }
+        function initializePadToken(stoi, itos) {
+            if (!stoi.hasOwnProperty('<pad>')) {
+                const padId = Object.keys(stoi).length + 1;
+                stoi['<pad>'] = padId;
+                itos[padId] = '<pad>';
+            }
+            return stoi['<pad>'];
+}
+
+        // ============================================
+        // TOKEN GENERATION
+        // ============================================
+        async function generateNextToken() {
+            hideStatus();
+            if (isGenerating) return;
+            if (!weights) {
+                showStatus('Please load the model first', 'error');
+                return;
+            }
+            //prompt = document.getElementById('textDisplay').textContent;
+            //console.log('Génération du prochain token pour le prompt:', prompt);
+            //currentTokens = encodeBPE(prompt, weights['merges']);
+            const stoi = weights['stoi'];
+            const merges = weights['merges'];
+            console.log('GGenerating next token for prompt:', currentTokens.join(''));
+
+            isGenerating = true;
+
+            hideStatus();
+            showStatus('Generating next token...');
+            setTimeout(hideStatus, 3000);
+            
+
+            try {
+                // Convert tokens to indices
+                const seqLen = 10;
+                const padId = initializePadToken(stoi, weights['itos']);
+                //let tokens = encodeBPE(currentTokens, merges);
+                console.log('Tokens encodés:', currentTokens);
+                const xSeq = currentTokens.map(t => stoi[t] || padId);
+
+                // Pad or crop to seqLen
+                if (xSeq.length < seqLen) {
+                    xSeqPadded = Array(seqLen - xSeq.length).fill(padId).concat(xSeq);
+                } else {
+                    xSeqPadded = xSeq.slice(-seqLen);
+                }
+
+                // Forward pass
+                probs = miniTransformer(xSeqPadded, weights);
+
+                // Get top-10 predictions
+                const topK = 10;
+                const indices = Array.from(probs.entries())
+                    .sort((a, b) => b[1] - a[1])
+                    .slice(0, topK);
+
+                // Display predictions
+                const predictionsDiv = document.getElementById('predictions');
+                predictionsDiv.innerHTML = '';
+                
+                indices.forEach(([idx, prob]) => {
+                    const token = weights.itos[idx+1] || '?';
+                    const card = document.createElement('div');
+                    card.className = 'token-card';
+                    card.innerHTML = `
+                        <div class="token-text">${token}</div>
+                        <div class="token-prob">${(prob * 100).toFixed(1)}%</div>
+                    `;
+                    card.onclick = () => selectToken(token, prob, indices);
+                    predictionsDiv.appendChild(card);
+                });
+
+                hideStatus();
+            } catch (error) {
+                showStatus('Erreur: ' + error.message, 'error');
+                console.error(error);
+            } finally {
+                isGenerating = false;
+            }
+        }
+
+        function selectToken(token, confidence, allPredictions) {
+            currentTokens.push(token);
+            confidences.push(confidence);
+            updateDisplay();
+            generateNextToken();
+        }
+
+        async function generateAutomatic() {
+            const numTokens = parseInt(document.getElementById('numTokensSlider').value);
+            
+            for (let i = 0; i < numTokens; i++) {
+                await new Promise(resolve => {
+                    setTimeout(() => {
+                        if (currentTokens.length > 0 && probs) {
+                            // choisir un index aléatoire pondéré (top-k)
+                            const idx = sampleTopKIndex(probs, parseInt(document.getElementById('kSlider').value));
+                            console.log('Génération automatique - sélection du token index:', idx);
+                            // trouve la carte avec cet index et clique dessus      
+                            for (let j = 0; j < document.querySelectorAll('.token-card').length; j++) {
+                                console.log('Vérification de la carte token:', document.querySelectorAll('.token-card')[j].textContent.split('\n')[1].replace(/\s/g, ""));
+                                console.log('Comparaison avec le token cible:', weights.itos[idx+1].replace(/\s/g, ""));
+                                if (document.querySelectorAll('.token-card')[j].textContent.split('\n')[1].replace("</w>", "").replace(/\s/g, "") === weights.itos[idx+1].replace("</w>", "").replace(/\s/g, "")) {
+                                    document.querySelectorAll('.token-card')[j].click();
+                                    break;
+                                }
+                            }
+                        }
+                        resolve();
+                    }, 750);
+                });
+            }
+        }
+
+        function resetGeneration() {
+            currentTokens = [];
+            confidences = [];
+            document.getElementById('predictions').innerHTML = '';
+            updateDisplay();
+            document.getElementById('promptInput').focus();
+        }
+
+        // ============================================
+        // LOAD WEIGHTS ON PAGE LOAD
+        // ============================================
+        window.addEventListener('load', () => {
+            loadWeights();
+        });
+    </script>
+</body>
+</html>
