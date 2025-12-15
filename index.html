@@ -373,6 +373,10 @@
                     <label>Number of tokens to generate: <span class="slider-value" id="numTokensValue">10</span></label>
                     <input type="range" id="numTokensSlider" min="1" max="50" value="10" oninput="document.getElementById('numTokensValue').textContent = this.value">
                 </div>
+                <div class="slider-group">
+                    <label>Time between tokens (ms): <span class="slider-value" id="timeBetweenValue">500</span></label>
+                    <input type="range" id="timeBetweenSlider" min="0" max="10000" value="500" oninput="document.getElementById('timeBetweenValue').textContent = this.value">
+                </div>
             </div>
 
             <!-- Predictions -->
@@ -912,7 +916,7 @@
                             }
                         }
                         resolve();
-                    }, 750);
+                    }, parseInt(document.getElementById('timeBetweenSlider').value));
                 });
             }
         }
